@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema({
         trim: true
     },
     phoneNumber: {
-        type: Number,
+        type: String,
         required: true,
         unique: true,
         trim: true
@@ -41,7 +41,7 @@ userSchema.pre("save", async function (next) {
 })
 
 userSchema.methods.isPasswordCorrect = async  function (password){
-    return await bcrypt.compare(this.password, password);
+    return await bcrypt.compare(password, this.password);
 }
 
 const User = mongoose.model("User", userSchema);
