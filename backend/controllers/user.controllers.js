@@ -1,5 +1,6 @@
 const User = require("../models/user.models.js");
 const jwt = require("jsonwebtoken");
+const sendMail = require("../config/nodemailer.js");
 
 const signupUser = ( async (req, res) => {
     const { username, fullName, password, email, phoneNumber } = req.body;
@@ -38,9 +39,15 @@ const signupUser = ( async (req, res) => {
                 message: "Something went wrong while signing up the user"
             })
         }
+
+        try {
+            await sendMail(email);
+        } catch (error) {
+            res.status(500).json({ message: 'User Signed in Successfully but, Error sending welcome email' });
+        }
     
         res.status(201).json({
-            message: "User Signed Up Successfully"
+            message: "User Signed Up Successfully and Email sent"
         });
     } catch (error) {
         res.status(500).json({
