@@ -1,6 +1,7 @@
 const User = require("../models/user.models.js");
 const jwt = require("jsonwebtoken");
 const sendMail = require("../config/nodemailer.js");
+const generateOtp = require("../utils/generateOtp.js");
 
 const signupUser = ( async (req, res) => {
     const { username, fullName, password, email, phoneNumber } = req.body;
@@ -21,13 +22,16 @@ const signupUser = ( async (req, res) => {
                 message: "User Already Exists!!"
             });
         }
+
+        const otp = generateOtp();
     
         const user = await User.create({
             username,
             fullName,
             email: email.toLowerCase(),
             password,
-            phoneNumber
+            phoneNumber,
+            otp
         });
     
         const createdUser = await User.findById(user._id).select(
@@ -40,14 +44,18 @@ const signupUser = ( async (req, res) => {
             })
         }
 
+
         try {
-            await sendMail(email);
+            await sendMail(email, otp);
         } catch (error) {
-            res.status(500).json({ message: 'User Signed in Successfully but, Error sending welcome email' });
+            res.status(500).json({ 
+                message: 'User Signed in Successfully but, Error sending welcome email', 
+            });
         }
     
         res.status(201).json({
-            message: "User Signed Up Successfully and Email sent"
+            message: "User Signed Up Successfully and Email sent",
+            user: user
         });
     } catch (error) {
         res.status(500).json({
@@ -56,6 +64,35 @@ const signupUser = ( async (req, res) => {
         });
     }
 });
+
+const verifyOtp = ( async (req, res) => {
+    const { otp } = req.body;
+
+    if (otp === "") {
+        res.status(400).json({message: "please enter the code."})
+    }
+
+    try {
+        const user = await User.findOne({ otp });
+
+        if (!user) {
+            res.status(409).json({message: "User does not exists"});
+        }
+
+        user.isVerified = true;
+        user.otp = undefined;
+        await user.save();
+
+        res.status(200).json({
+            message: "Email verified successfully"
+        })
+    } catch (error) {
+        res.status(500).json({
+            message: "internal server error",
+            error: error.message
+        })
+    }
+})
 
 const signinUser = ( async (req, res) => {
     const { username, password } = req.body;
@@ -106,5 +143,6 @@ const signinUser = ( async (req, res) => {
 
 module.exports = {
     signupUser,
-    signinUser
+    signinUser,
+    verifyOtp
 }

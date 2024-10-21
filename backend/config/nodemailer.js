@@ -8,12 +8,12 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-function sendEmail (email) {
+function sendEmail (email, otp) {
     const mailOptions =  {
         from: process.env.USER_EMAIL,
         to: email,
         subject: 'Welcome To Todos App',
-        text: 'Create and Organize your Todos With Us....' 
+        text: `Your otp is ${otp} please verify it`
     };
 
     return transporter.sendMail(mailOptions);
